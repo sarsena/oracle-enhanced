@@ -80,7 +80,7 @@ namespace :db do
       abcs = ActiveRecord::Base.configurations
       rails_env = defined?(Rails.env) ? Rails.env : RAILS_ENV
       ActiveRecord::Base.establish_connection(abcs[rails_env])
-      ActiveRecord::Base.connection.execute_structure_dump(File.read("db/structure.sql", "a"))
+      ActiveRecord::Base.connection.execute_structure_dump(File.read("db/structure.sql"))
     end
   end
 
