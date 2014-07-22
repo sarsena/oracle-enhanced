@@ -76,7 +76,14 @@ namespace :db do
         Array(existing_actions).each{|action| action.call}
       end
     end
+    redefine_task :load => :environment do |existing_actions|
+      abcs = ActiveRecord::Base.configurations
+      rails_env = defined?(Rails.env) ? Rails.env : RAILS_ENV
+      ActiveRecord::Base.establish_connection(abcs[rails_env])
+      ActiveRecord::Base.connection.execute_structure_dump(File.read("db/structure.sql", "a"))
+    end
   end
+
 
   namespace :test do
     redefine_task :clone_structure => [ "db:structure:dump", "db:test:purge" ] do |existing_actions|
