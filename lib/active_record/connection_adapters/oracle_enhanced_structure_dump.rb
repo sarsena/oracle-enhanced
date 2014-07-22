@@ -143,20 +143,6 @@ module ActiveRecord #:nodoc:
       # Extract all stored procedures, packages, synonyms and views.
       def structure_dump_db_stored_code #:nodoc:
         structure = []
-
-        # export synonyms
-        select_all("SELECT owner, synonym_name, table_name, table_owner
-                      FROM all_synonyms
-                     WHERE owner = SYS_CONTEXT('userenv', 'session_user') ").each do |synonym|
-          structure << "CREATE OR REPLACE #{synonym['owner'] == 'PUBLIC' ? 'PUBLIC' : '' } SYNONYM #{synonym['synonym_name']}"
-          structure << " FOR #{synonym['table_owner']}.#{synonym['table_name']}"
-        end
-
-        # export views 
-        select_all("SELECT view_name, text FROM user_views").each do |view|
-          structure << "CREATE OR REPLACE VIEW #{view['view_name']} AS\n #{view['text']}"
-        end
-
         select_all("SELECT DISTINCT name, type
                      FROM all_source
                     WHERE type IN ('PROCEDURE', 'PACKAGE', 'PACKAGE BODY', 'FUNCTION', 'TRIGGER', 'TYPE')
@@ -175,6 +161,19 @@ module ActiveRecord #:nodoc:
           end
           ddl << ";" unless ddl.strip[-1,1] == ";"
           structure << ddl
+        end
+
+        # export views 
+        select_all("SELECT view_name, text FROM user_views").each do |view|
+          structure << "CREATE OR REPLACE VIEW #{view['view_name']} AS\n #{view['text']}"
+        end
+
+        # export synonyms
+        select_all("SELECT owner, synonym_name, table_name, table_owner
+                      FROM all_synonyms
+                     WHERE owner = SYS_CONTEXT('userenv', 'session_user') ").each do |synonym|
+          structure << "CREATE OR REPLACE #{synonym['owner'] == 'PUBLIC' ? 'PUBLIC' : '' } SYNONYM #{synonym['synonym_name']}"
+          structure << " FOR #{synonym['table_owner']}.#{synonym['table_name']}"
         end
 
         join_with_statement_token(structure)
